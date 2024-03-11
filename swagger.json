@@ -1,0 +1,34 @@
+{
+    "swagger": "2.0",
+    "paths": {
+        "/recipes": {
+            "get": {
+                "description": "Successful operation",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "operationId": "listRecipes"
+            }
+        },
+        "/recipes/{id}": {
+            "put": {
+                "description": "ID of the recipe",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "operationId": "updateRecipe",
+                "parameters": [
+                    {
+                        "name": "id"
+                    }
+                ]
+            }
+        }
+    }
+}
