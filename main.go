@@ -1,12 +1,20 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type Recipe struct {
@@ -19,9 +27,35 @@ type Recipe struct {
 }
 
 var recipes []Recipe
+var ctx context.Context
+var err error
+var client *mongo.Client
 
 func init() {
 	recipes = make([]Recipe, 0)
+	file, _ := ioutil.ReadFile("recipes.json")
+	_ = json.Unmarshal([]byte(file), &recipes)
+	ctx = context.Background()
+	client, err = mongo.Connect(ctx,
+		options.Client().ApplyURI(os.Getenv("MONGO_URI")))
+	if err = client.Ping(context.TODO(),
+		readpref.Primary()); err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Connected to MongoDB")
+
+	var listOfRecipes []interface{}
+	for _, recipe := range recipes {
+		listOfRecipes = append(listOfRecipes, recipe)
+	}
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
+	insertManyResult, err := collection.InsertMany(ctx, listOfRecipes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Inserted recipes: ", len(insertManyResult.InsertedIDs))
 }
 
 func NewRecipeHandler(c *gin.Context) {
@@ -63,11 +97,16 @@ func ListRecipeHandler(c *gin.Context) {
 // - application/json
 // responses:
 // '200':
-//      description: Successful operation
+//
+//	description: Successful operation
+//
 // '400':
-// 		description: Invalid input
+//
+//	description: Invalid input
+//
 // '404':
-// 		description: Invalid recipe ID
+//
+//	description: Invalid recipe ID
 func UpdateRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	var recipe Recipe
