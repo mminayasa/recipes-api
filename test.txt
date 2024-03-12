@@ -1,0 +1,1 @@
+MONGO_URI="mongodb+srv://mistra:sekarang@cluster0.buwh7if.mongodb.net/recipes" MONGO_DATABASE=demo go run main.go
